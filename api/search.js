@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     const allModules = [];
 
     for (let repo of repos) {
-      const fullTxtResponse = await fetch(`https://modules.fajox.one/${repo.path}/full.txt`);
+      const fullTxtResponse = await fetch(`https://modules.fajox.one${repo.path}/full.txt`);
       const fullTxt = await fullTxtResponse.text();
 
       const modules = fullTxt.split('\n').map(module => {
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     const modulesWithRatios = await Promise.all(allModules.map(async (module) => {
       const ratio = getRatio(query, module.module);
       if (ratio > 0) {
-        const moduleLink = `https://modules.fajox.one/${module.repoPath}/${module.module}.py`;
+        const moduleLink = `https://modules.fajox.one${module.repoPath}/${module.module}.py`;
         const moduleInfo = await getModuleInfo(moduleLink);
         return {
           module: module.module.replace(/\r/g, ""),
