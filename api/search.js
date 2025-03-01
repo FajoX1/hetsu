@@ -57,7 +57,8 @@ export default async function handler(req, res) {
     const modulesWithRatios = await Promise.all(allModules.map(async (module) => {
       const ratio = getRatio(query, module.module);
       if (ratio > 0) {
-        const moduleInfo = await getModuleInfo(`https://modules.fajox.one/${module.repoPath}/${module.module}.py`);
+        const moduleLink = `https://modules.fajox.one/${module.repoPath}/${module.module}.py`;
+        const moduleInfo = await getModuleInfo(moduleLink);
         return {
           module: module.module.replace(/\r/g, ""),
           ratio,
@@ -65,6 +66,7 @@ export default async function handler(req, res) {
           description: moduleInfo.description,
           banner: moduleInfo.banner,
           developer: moduleInfo.developer,
+          link: moduleLink.replace(/\r/g, ""),
         };
       }
       return null;
