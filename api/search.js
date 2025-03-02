@@ -93,7 +93,7 @@ const getModuleInfo = async (modulePath) => {
 
   return { 
     name: name || null, 
-    description: null, 
+    description: description || null, 
     banner: banner || null, 
     developer: developer || null
   };
