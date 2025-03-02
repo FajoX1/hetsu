@@ -141,7 +141,18 @@ export default async function handler(req, res) {
     }));
 
     const filteredModules = modulesWithRatios.filter(module => module !== null);
-    filteredModules.sort((a, b) => b.ratio - a.ratio);
+
+    filteredModules.sort((a, b) => {
+      if (b.ratio !== a.ratio) {
+        return b.ratio - a.ratio;
+      }
+
+      if (b.module.length !== a.module.length) {
+        return b.module.length - a.module.length;
+      }
+
+      return a.module.localeCompare(b.module);
+    });
 
     const bestModules = filteredModules.slice(0, limit);
 
