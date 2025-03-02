@@ -92,10 +92,10 @@ const getModuleInfo = async (modulePath) => {
   }
 
   return { 
-    name: name || "Unknown", 
-    description: description, 
-    banner: banner || "No banner", 
-    developer: developer || "No developer"
+    name: name || null, 
+    description: null, 
+    banner: banner || null, 
+    developer: developer || null
   };
 };
 
