@@ -20,15 +20,83 @@ const getModuleInfo = async (modulePath) => {
 
   const modCodeLines = moduleCode.split('\n');
   let name = null, description = null, banner = null, developer = null;
+  let insideClass = false;
+  let insideDocstring = false;
+  let descriptionLines = [];
 
-  for (let line of modCodeLines) {
-    if (line.startsWith("# Name:")) name = line.split(":", 2)[1]?.trim() || name;
-    if (line.startsWith("# Description:")) description = line.split(":", 2)[1]?.trim() || description;
-    if (line.startsWith("# meta banner:")) banner = line.slice(line.indexOf(":") + 1).trim() || banner;
-    if (line.startsWith("# meta developer:")) developer = line.slice(line.indexOf(":") + 1).trim() || developer;
+  for (let i = 0; i < modCodeLines.length; i++) {
+    let line = modCodeLines[i];
+    if (!line) continue;
+    line = line.trim();
+
+    if (line.startsWith("# meta banner:") && line.includes(":")) {
+      banner = line.split(":").slice(1).join(":").trim() || banner;
+    }
+    if (line.startsWith("# meta developer:") && line.includes(":")) {
+      developer = line.split(":").slice(1).join(":").trim() || developer;
+    }
+
+    const nameMatch = line.match(/["']name["']\s*:\s*["'](.+?)["']/);
+    if (nameMatch && !name) {
+      name = nameMatch[1];
+    }
+
+    if (line.startsWith("class ") && line.includes("(loader.Module)")) {
+      insideClass = true;
+    }
+
+    if (insideClass) {
+      if (line.startsWith('"""') && line.endsWith('"""') && line.length > 6) {
+        description = line.slice(3, -3).trim();
+        insideClass = false;
+        continue;
+      }
+
+      if (line.startsWith('"""') && !insideDocstring) {
+        insideDocstring = true;
+        descriptionLines = [];
+        let content = line.slice(3).trim();
+        if (content.endsWith('"""')) {
+          description = content.slice(0, -3).trim();
+          insideDocstring = false;
+          insideClass = false;
+        } else if (content) {
+          descriptionLines.push(content);
+        }
+        continue;
+      }
+
+      if (insideDocstring) {
+        if (line.endsWith('"""')) {
+          let content = line.slice(0, -3).trim();
+          if (content) {
+            descriptionLines.push(content);
+          }
+          description = descriptionLines.join(" ").trim();
+          insideDocstring = false;
+          insideClass = false;
+          continue;
+        } else {
+          descriptionLines.push(line);
+        }
+      }
+    }
+
+    if (line.includes('def ') || line.includes('class ')) {
+      continue;
+    }
   }
 
-  return { name, description, banner, developer };
+  if (!description) {
+    description = "No description available";
+  }
+
+  return { 
+    name: name || "Unknown", 
+    description: description, 
+    banner: banner || "No banner", 
+    developer: developer || "No developer"
+  };
 };
 
 export default async function handler(req, res) {
@@ -57,7 +125,7 @@ export default async function handler(req, res) {
     const modulesWithRatios = await Promise.all(allModules.map(async (module) => {
       const ratio = getRatio(query, module.module);
       if (ratio > 0) {
-        const moduleLink = `https://modules.fajox.one${module.repoPath}/${module.module}.py`;
+        const moduleLink = `https://modules.fajox.one${encodeURI(module.repoPath)}/${encodeURIComponent(module.module.replace(/\r/g, ""))}.py`;
         const moduleInfo = await getModuleInfo(moduleLink);
         return {
           module: module.module.replace(/\r/g, ""),
